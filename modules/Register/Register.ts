@@ -37,71 +37,71 @@ Register.post("/register/validateEmail", async (ctx) => {
 
 // Endpoint para registrar un nuevo usuario
 Register.post("/register/adduser", async (ctx) => {
-    try {
-      const { email, password, id_role } = await ctx.request.body().value; // Extraer los datos del cuerpo de la solicitud
-  
-      // Validar que todos los campos sean proporcionados
-      if (!email || !password || !id_role) {
-        ctx.response.status = 400;
-        ctx.response.body = {
-          message: "Todos los campos son requeridos: email, password, id_role.",
-        };
-        return;
-      }
-  
-      // Verificar si el correo ya está registrado
-      const dbClient = getDBClient();
-      const existingUser = await dbClient.query(
-        "SELECT * FROM cuenta WHERE correo = ?",
-        [email],
-      );
-  
-      if (existingUser.length > 0) {
-        ctx.response.status = 400;
-        ctx.response.body = { message: "El correo ya está registrado." };
-        return;
-      }
-  
-      // Hashear la contraseña
-      const hashedPassword = await hashPassword(password);
-  
-      // Insertar el nuevo usuario en la base de datos
-      const result = await dbClient.execute(
-        "INSERT INTO cuenta (correo, contraseña, id_rol, nombre, activated) VALUES (?, ?, ?, ?, ?)",
-        [email, hashedPassword, id_role, email, false], // Usamos el correo como nombre por ahora y 'false' para 'activated'
-      );
-  
-      const userId = result.lastInsertId; // Obtener el ID del usuario recién insertado
-  
-      // Generar un código de validación
-      const validationCode = Math.floor(100000 + Math.random() * 900000).toString(); // Código de 6 dígitos
-  
-      // Almacenar el código en la base de datos
-      await dbClient.execute(
-        "INSERT INTO codigos_validacion (id_usuario, codigo) VALUES (?, ?)",
-        [userId, validationCode]
-      );
-  
-      // Crear una instancia del servicio de correo
-      const emailService = new EmailService();
-  
-      // Enviar el correo de validación
-      await emailService.sendValidationEmail(email, validationCode);
-  
-      ctx.response.status = 201;
-      ctx.response.body = { message: "Usuario registrado correctamente. Se ha enviado un correo de validación." };
-    } catch (error) {
-      console.error("Error en el registro de usuario:", error);
-      ctx.response.status = 500;
-      ctx.response.body = { message: "Error interno al registrar el usuario." };
+  try {
+    const { email, password, id_role, nombre } = await ctx.request.body().value; // Extraer también el nombre
+
+    // Validar que todos los campos sean proporcionados
+    if (!email || !password || !id_role || !nombre) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        message: "Todos los campos son requeridos: email, password, id_role, nombre.",
+      };
+      return;
     }
+
+    // Verificar si el correo ya está registrado
+    const dbClient = getDBClient();
+    const existingUser = await dbClient.query(
+      "SELECT * FROM cuenta WHERE correo = ?",
+      [email],
+    );
+
+    if (existingUser.length > 0) {
+      ctx.response.status = 400;
+      ctx.response.body = { message: "El correo ya está registrado." };
+      return;
+    }
+
+    // Hashear la contraseña
+    const hashedPassword = await hashPassword(password);
+
+    // Insertar el nuevo usuario en la base de datos con el nombre correcto
+    const result = await dbClient.execute(
+      "INSERT INTO cuenta (correo, contraseña, id_rol, nombre, activated) VALUES (?, ?, ?, ?, ?)",
+      [email, hashedPassword, id_role, nombre, false], // Aquí se usa 'nombre' en lugar de 'email'
+    );
+
+    const userId = result.lastInsertId; // Obtener el ID del usuario recién insertado
+
+    // Generar un código de validación
+    const validationCode = Math.floor(100000 + Math.random() * 900000).toString(); // Código de 6 dígitos
+
+    // Almacenar el código en la base de datos
+    await dbClient.execute(
+      "INSERT INTO codigos_validacion (id_usuario, codigo) VALUES (?, ?)",
+      [userId, validationCode]
+    );
+
+    // Crear una instancia del servicio de correo
+    const emailService = new EmailService();
+
+    // Enviar el correo de validación
+    await emailService.sendValidationEmail(email, validationCode);
+
+    ctx.response.status = 201;
+    ctx.response.body = { message: "Usuario registrado correctamente. Se ha enviado un correo de validación." };
+  } catch (error) {
+    console.error("Error en el registro de usuario:", error);
+    ctx.response.status = 500;
+    ctx.response.body = { message: "Error interno al registrar el usuario." };
+  }
   /* ------------------------- PETICIÓN DE PRUEBA
-    {
-        "email": "exampleæexample.com",
-        "password": "123456",
-        "id_role": 1
-    }
-        ----------------------------*/
+{
+    "email": "replacedspace17@gmail.com",
+    "password": "Javier117",
+    "id_role": 1,
+    "nombre": "Javier Gutierrez"
+}
 });
 
 // Endpoint para activar un usuario
@@ -282,7 +282,7 @@ Register.post("/register/business", async (ctx) => {
   });
   
 
-//Endpoint para agregar sucursales al negocio
+  //Endpoint para agregar sucursales al negocio
 Register.post("/register/sucursal", async (ctx) => {
     try {
       // Extraer los datos del cuerpo de la solicitud
@@ -335,6 +335,97 @@ Register.post("/register/sucursal", async (ctx) => {
 
 
 //Endpoint para agregar usuarios a la sucursal(username@dominio-negocio.com)
+// Endpoint para registrar un nuevo usuario y asociarlo a una sucursal y un negocio
+Register.post("/register/adduser/sucursal/negocio", async (ctx) => {
+  try {
+    const { email, password, id_role, id_sucursal, id_negocio, nombre, id_admin } = await ctx.request.body().value; // Extraer los datos del cuerpo de la solicitud
+
+    // Validar que todos los campos sean proporcionados
+    if (!email || !password || !id_role || !id_sucursal || !id_negocio || !nombre || !id_admin) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        message: "Todos los campos son requeridos: email, password, id_role, id_sucursal, id_negocio, nombre.",
+      };
+      return;
+    }
+
+    // Verificar si el correo ya está registrado
+    const dbClient = getDBClient();
+    const existingUser = await dbClient.query(
+      "SELECT * FROM cuenta WHERE correo = ?",
+      [email]
+    );
+
+    if (existingUser.length > 0) {
+      ctx.response.status = 400;
+      ctx.response.body = { message: "El correo ya está registrado." };
+      return;
+    }
+
+    // Verificar si la sucursal existe
+    const existingSucursal = await dbClient.query(
+      "SELECT * FROM sucursales WHERE id = ?",
+      [id_sucursal]
+    );
+
+    if (existingSucursal.length === 0) {
+      ctx.response.status = 400;
+      ctx.response.body = { message: "La sucursal no existe." };
+      return;
+    }
+
+    // Verificar si el negocio existe
+    const existingNegocio = await dbClient.query(
+      "SELECT * FROM negocio WHERE id = ?",
+      [id_negocio]
+    );
+
+    if (existingNegocio.length === 0) {
+      ctx.response.status = 400;
+      ctx.response.body = { message: "El negocio no existe." };
+      return;
+    }
+
+    // Hashear la contraseña
+    const hashedPassword = await hashPassword(password);
+
+    // Insertar el nuevo usuario en la base de datos
+    const result = await dbClient.execute(
+      "INSERT INTO cuenta (correo, contraseña, id_rol, nombre, activated) VALUES (?, ?, ?, ?, ?)",
+      [email, hashedPassword, id_role, nombre, true] // Usamos el correo como nombre por ahora y 'false' para 'activated'
+    );
+
+    const userId = result.lastInsertId; // Obtener el ID del usuario recién insertado
+
+    // Insertar la relación entre el usuario, la sucursal y el negocio
+    await dbClient.execute(
+      "INSERT INTO cuenta_sucursal (id_cuenta, id_sucursal, id_negocio, id_admin) VALUES (?, ?, ?, ?)",
+      [userId, id_sucursal, id_negocio, id_admin]
+    );
+
+    // No es necesario almacenar el código de validación ni enviar el correo
+    // Solo devolvemos un mensaje de éxito
+    ctx.response.status = 201;
+    ctx.response.body = { message: "Usuario registrado correctamente." };
+  } catch (error) {
+    console.error("Error en el registro de usuario:", error);
+    ctx.response.status = 500;
+    ctx.response.body = { message: "Error interno al registrar el usuario." };
+  }
+  /* ------------------------- PETICIÓN DE PRUEBA
+  {
+      "email": "luis@onix.com",
+      "password": "Javier117",
+      "id_role": 3,
+      "id_sucursal": 1,
+      "id_negocio": 1,
+      "nombre": "Javier Gutierrez",
+      "id_admin": 7
+  }
+  ----------------------------*/
+});
+
+
 
   
   

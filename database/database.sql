@@ -67,6 +67,15 @@ CREATE TABLE sucursales (
   FOREIGN KEY (id_negocio) REFERENCES negocio(id) ON DELETE CASCADE
 );
 
+CREATE TABLE cuenta_sucursal (
+  id INTEGER AUTO_INCREMENT PRIMARY KEY,
+  id_cuenta INTEGER NOT NULL,
+  id_sucursal INTEGER NOT NULL,
+  FOREIGN KEY (id_cuenta) REFERENCES cuenta(id) ON DELETE CASCADE,
+  FOREIGN KEY (id_sucursal) REFERENCES sucursales(id) ON DELETE CASCADE,
+  UNIQUE (id_cuenta, id_sucursal)  -- Asegura que no haya duplicados en la relación
+);
+
 
 --- Tabla de insertar roles
 INSERT INTO roles (nombre, descripcion) VALUES
