@@ -1,4 +1,9 @@
 // deno-lint-ignore-file
+import { Application } from "https://deno.land/x/oak@v12.6.0/mod.ts"; // Importar la clase Application, para crear el server
+import Prueba from "./modules/test/test.ts"; // Importar las rutas de configuración del modulo example
+import Prueba2 from "./modules/test/Test2.ts"; // Importar las rutas de configuración del modulo example
+import { oakCors } from "https://deno.land/x/cors/mod.ts"; // Importar el middleware de cors para permitir peticiones desde cualquier origen
+import Molinero from "./modules/puestos/molinero/Molinero.ts";
 import { Application } from "https://deno.land/x/oak@v12.6.0/mod.ts"; // Framework Oak para servidores HTTP
 import Prueba from "./modules/test/test.ts"; // Importar rutas del módulo Prueba
 import { oakCors } from "https://deno.land/x/cors/mod.ts"; // Middleware de CORS
@@ -29,6 +34,13 @@ app.use(dbConnectionMiddleware);
 app.use(Prueba.routes());
 app.use(Prueba.allowedMethods());
 
+//---------------------------------------- Usar las rutas de configuración (test2.ts)
+app.use(Prueba2.routes());
+app.use(Prueba2.allowedMethods());
+
+//---------------------------------------- Usar las rutas de configuración (molinero.ts)
+app.use(Molinero.routes());
+app.use(Molinero.allowedMethods());
 //-----------------------------------------------------------------------------------  ENDPOINTS DE LOS MÓDULOS A USAR
 app.use(Register.routes());
 app.use(Register.allowedMethods());
