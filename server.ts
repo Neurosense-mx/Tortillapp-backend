@@ -8,7 +8,7 @@ import { dbConnectionMiddleware } from "./utils/Middleware.ts"; // Middleware de
 
 //-----------------------------------------------------------------------------------IMPORTS DE LOS MÓDULOS A USAR
 import Register from "./modules/Register/Register.ts";
-
+import Login from "./modules/Login/Login.ts";
 
 // Crear la aplicación
 const app = new Application();
@@ -36,6 +36,9 @@ app.use(Molinero.allowedMethods());
 //-----------------------------------------------------------------------------------  ENDPOINTS DE LOS MÓDULOS A USAR
 app.use(Register.routes());
 app.use(Register.allowedMethods());
+//login
+app.use(Login.routes());
+app.use(Login.allowedMethods());
 
 
 

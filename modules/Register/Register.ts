@@ -44,7 +44,8 @@ Register.post("/register/adduser", async (ctx) => {
     if (!email || !password || !id_role || !nombre) {
       ctx.response.status = 400;
       ctx.response.body = {
-        message: "Todos los campos son requeridos: email, password, id_role, nombre.",
+        message:
+          "Todos los campos son requeridos: email, password, id_role, nombre.",
       };
       return;
     }
@@ -74,12 +75,13 @@ Register.post("/register/adduser", async (ctx) => {
     const userId = result.lastInsertId; // Obtener el ID del usuario recién insertado
 
     // Generar un código de validación
-    const validationCode = Math.floor(100000 + Math.random() * 900000).toString(); // Código de 6 dígitos
+    const validationCode = Math.floor(100000 + Math.random() * 900000)
+      .toString(); // Código de 6 dígitos
 
     // Almacenar el código en la base de datos
     await dbClient.execute(
       "INSERT INTO codigos_validacion (id_usuario, codigo) VALUES (?, ?)",
-      [userId, validationCode]
+      [userId, validationCode],
     );
 
     // Crear una instancia del servicio de correo
@@ -89,7 +91,10 @@ Register.post("/register/adduser", async (ctx) => {
     await emailService.sendValidationEmail(email, validationCode);
 
     ctx.response.status = 201;
-    ctx.response.body = { message: "Usuario registrado correctamente. Se ha enviado un correo de validación." };
+    ctx.response.body = {
+      message:
+        "Usuario registrado correctamente. Se ha enviado un correo de validación.",
+    };
   } catch (error) {
     console.error("Error en el registro de usuario:", error);
     ctx.response.status = 500;
@@ -108,7 +113,7 @@ Register.post("/register/adduser", async (ctx) => {
 Register.post("/register/verify", async (ctx) => {
     try {
       const { userId, code } = await ctx.request.body().value; // Extraer los datos del cuerpo de la solicitud
-  
+
       // Validar que se haya proporcionado el id_usuario y el código
       if (!userId || !code) {
         ctx.response.status = 400;
@@ -117,26 +122,26 @@ Register.post("/register/verify", async (ctx) => {
         };
         return;
       }
-  
+
       // Verificar si el código de validación es correcto
       const dbClient = getDBClient();
       const validationRecord = await dbClient.query(
         "SELECT * FROM codigos_validacion WHERE id_usuario = ? AND codigo = ?",
         [userId, code],
       );
-  
+
       if (validationRecord.length === 0) {
         ctx.response.status = 400;
         ctx.response.body = { message: "Código de validación inválido." };
         return;
       }
-  
+
       // Actualizar el estado del usuario a 'activated' = true
       await dbClient.execute(
         "UPDATE cuenta SET activated = ? WHERE id = ?",
         [true, userId]
       );
-  
+
       ctx.response.status = 200;
       ctx.response.body = { message: "Cuenta activada correctamente." };
     } catch (error) {
@@ -170,60 +175,62 @@ Register.get("/register/getSubscriptions", async (ctx) => {
 
 //Registrar suscripcion de la cuenta
 Register.post("/register/subscription/add", async (ctx) => {
-    try {
-      // Extraer los datos del cuerpo de la solicitud
-      const { id_cuenta, id_suscripcion } = await ctx.request.body().value;
-  
-      // Validar que ambos campos sean proporcionados
-      if (!id_cuenta || !id_suscripcion) {
-        ctx.response.status = 400;
-        ctx.response.body = {
-          message: "Ambos campos son requeridos: id_cuenta, id_suscripcion.",
-        };
-        return;
-      }
-  
-      // Verificar que la cuenta y la suscripción existan
-      const dbClient = getDBClient();
-  
-      // Verificar si la cuenta existe
-      const accountExists = await dbClient.query(
-        "SELECT 1 FROM cuenta WHERE id = ?",
-        [id_cuenta]
-      );
-  
-      if (accountExists.length === 0) {
-        ctx.response.status = 400;
-        ctx.response.body = { message: "La cuenta no existe." };
-        return;
-      }
-  
-      // Verificar si la suscripción existe
-      const subscriptionExists = await dbClient.query(
-        "SELECT 1 FROM suscripciones WHERE id = ?",
-        [id_suscripcion]
-      );
-  
-      if (subscriptionExists.length === 0) {
-        ctx.response.status = 400;
-        ctx.response.body = { message: "La suscripción no existe." };
-        return;
-      }
-  
-      // Insertar la suscripción en la tabla cuentas_suscripciones
-      await dbClient.execute(
-        "INSERT INTO cuentas_suscripciones (id_cuenta, id_suscripcion) VALUES (?, ?)",
-        [id_cuenta, id_suscripcion]
-      );
-  
-      ctx.response.status = 201;
-      ctx.response.body = { message: "Suscripción registrada correctamente." };
-    } catch (error) {
-      console.error("Error al registrar la suscripción:", error);
-      ctx.response.status = 500;
-      ctx.response.body = { message: "Error interno al registrar la suscripción." };
+  try {
+    // Extraer los datos del cuerpo de la solicitud
+    const { id_cuenta, id_suscripcion } = await ctx.request.body().value;
+
+    // Validar que ambos campos sean proporcionados
+    if (!id_cuenta || !id_suscripcion) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        message: "Ambos campos son requeridos: id_cuenta, id_suscripcion.",
+      };
+      return;
     }
-    /* ------------------------- PETICIÓN DE PRUEBA
+
+    // Verificar que la cuenta y la suscripción existan
+    const dbClient = getDBClient();
+
+    // Verificar si la cuenta existe
+    const accountExists = await dbClient.query(
+      "SELECT 1 FROM cuenta WHERE id = ?",
+      [id_cuenta],
+    );
+
+    if (accountExists.length === 0) {
+      ctx.response.status = 400;
+      ctx.response.body = { message: "La cuenta no existe." };
+      return;
+    }
+
+    // Verificar si la suscripción existe
+    const subscriptionExists = await dbClient.query(
+      "SELECT 1 FROM suscripciones WHERE id = ?",
+      [id_suscripcion],
+    );
+
+    if (subscriptionExists.length === 0) {
+      ctx.response.status = 400;
+      ctx.response.body = { message: "La suscripción no existe." };
+      return;
+    }
+
+    // Insertar la suscripción en la tabla cuentas_suscripciones
+    await dbClient.execute(
+      "INSERT INTO cuentas_suscripciones (id_cuenta, id_suscripcion) VALUES (?, ?)",
+      [id_cuenta, id_suscripcion],
+    );
+
+    ctx.response.status = 201;
+    ctx.response.body = { message: "Suscripción registrada correctamente." };
+  } catch (error) {
+    console.error("Error al registrar la suscripción:", error);
+    ctx.response.status = 500;
+    ctx.response.body = {
+      message: "Error interno al registrar la suscripción.",
+    };
+  }
+  /* ------------------------- PETICIÓN DE PRUEBA
     {
         "id_cuenta": 1,
         "id_suscripcion": 1
@@ -233,97 +240,98 @@ Register.post("/register/subscription/add", async (ctx) => {
 
 //Endpoint para registrar el nombre del negocio
 Register.post("/register/business", async (ctx) => {
-    try {
-      // Extraer los datos del cuerpo de la solicitud
-      const { nombre, dominio, id_cuenta } = await ctx.request.body().value;
-  
-      // Validar que todos los campos sean proporcionados
-      if (!nombre || !dominio || !id_cuenta) {
-        ctx.response.status = 400;
-        ctx.response.body = {
-          message: "Todos los campos son requeridos: nombre, dominio, id_cuenta.",
-        };
-        return;
-      }
-  
-      // Verificar si la cuenta existe
-      const dbClient = getDBClient();
-      const accountExists = await dbClient.query(
-        "SELECT 1 FROM cuenta WHERE id = ?",
-        [id_cuenta]
-      );
-  
-      if (accountExists.length === 0) {
-        ctx.response.status = 400;
-        ctx.response.body = { message: "La cuenta no existe." };
-        return;
-      }
-  
-      // Insertar el negocio en la tabla negocio
-      await dbClient.execute(
-        "INSERT INTO negocio (nombre, dominio, id_cuenta) VALUES (?, ?, ?)",
-        [nombre, dominio, id_cuenta]
-      );
-  
-      ctx.response.status = 201;
-      ctx.response.body = { message: "Negocio registrado correctamente." };
-    } catch (error) {
-      console.error("Error al registrar el negocio:", error);
-      ctx.response.status = 500;
-      ctx.response.body = { message: "Error interno al registrar el negocio." };
+  try {
+    // Extraer los datos del cuerpo de la solicitud
+    const { nombre, dominio, id_cuenta } = await ctx.request.body().value;
+
+    // Validar que todos los campos sean proporcionados
+    if (!nombre || !dominio || !id_cuenta) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        message: "Todos los campos son requeridos: nombre, dominio, id_cuenta.",
+      };
+      return;
     }
-    /* ------------------------- PETICIÓN DE PRUEBA
+
+    // Verificar si la cuenta existe
+    const dbClient = getDBClient();
+    const accountExists = await dbClient.query(
+      "SELECT 1 FROM cuenta WHERE id = ?",
+      [id_cuenta],
+    );
+
+    if (accountExists.length === 0) {
+      ctx.response.status = 400;
+      ctx.response.body = { message: "La cuenta no existe." };
+      return;
+    }
+
+    // Insertar el negocio en la tabla negocio
+    await dbClient.execute(
+      "INSERT INTO negocio (nombre, dominio, id_cuenta) VALUES (?, ?, ?)",
+      [nombre, dominio, id_cuenta],
+    );
+
+    ctx.response.status = 201;
+    ctx.response.body = { message: "Negocio registrado correctamente." };
+  } catch (error) {
+    console.error("Error al registrar el negocio:", error);
+    ctx.response.status = 500;
+    ctx.response.body = { message: "Error interno al registrar el negocio." };
+  }
+  /* ------------------------- PETICIÓN DE PRUEBA
     {
         "nombre": "Mi Negocio",
         "dominio": "mi-negocio.com",
         "id_cuenta": 1
     }
     ----------------------------*/
-  });
-  
+});
 
-  //Endpoint para agregar sucursales al negocio
+//Endpoint para agregar sucursales al negocio
 Register.post("/register/sucursal", async (ctx) => {
-    try {
-      // Extraer los datos del cuerpo de la solicitud
-      const { nombre, longitude, latitude, id_negocio } = await ctx.request.body().value;
-  
-      // Validar que todos los campos sean proporcionados
-      if (!nombre || !longitude || !latitude || !id_negocio) {
-        ctx.response.status = 400;
-        ctx.response.body = {
-          message: "Todos los campos son requeridos: nombre, longitude, latitude, id_negocio.",
-        };
-        return;
-      }
-  
-      // Verificar si el negocio (id_negocio) existe
-      const dbClient = getDBClient();
-      const businessExists = await dbClient.query(
-        "SELECT 1 FROM negocio WHERE id = ?",
-        [id_negocio]
-      );
-  
-      if (businessExists.length === 0) {
-        ctx.response.status = 400;
-        ctx.response.body = { message: "El negocio no existe." };
-        return;
-      }
-  
-      // Insertar la nueva sucursal en la tabla sucursales
-      await dbClient.execute(
-        "INSERT INTO sucursales (nombre, longitude, latitude, id_negocio) VALUES (?, ?, ?, ?)",
-        [nombre, longitude, latitude, id_negocio]
-      );
-  
-      ctx.response.status = 201;
-      ctx.response.body = { message: "Sucursal registrada correctamente." };
-    } catch (error) {
-      console.error("Error al registrar la sucursal:", error);
-      ctx.response.status = 500;
-      ctx.response.body = { message: "Error interno al registrar la sucursal." };
+  try {
+    // Extraer los datos del cuerpo de la solicitud
+    const { nombre, longitude, latitude, id_negocio } = await ctx.request.body()
+      .value;
+
+    // Validar que todos los campos sean proporcionados
+    if (!nombre || !longitude || !latitude || !id_negocio) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        message:
+          "Todos los campos son requeridos: nombre, longitude, latitude, id_negocio.",
+      };
+      return;
     }
-    /* ------------------------- PETICIÓN DE PRUEBA
+
+    // Verificar si el negocio (id_negocio) existe
+    const dbClient = getDBClient();
+    const businessExists = await dbClient.query(
+      "SELECT 1 FROM negocio WHERE id = ?",
+      [id_negocio],
+    );
+
+    if (businessExists.length === 0) {
+      ctx.response.status = 400;
+      ctx.response.body = { message: "El negocio no existe." };
+      return;
+    }
+
+    // Insertar la nueva sucursal en la tabla sucursales
+    await dbClient.execute(
+      "INSERT INTO sucursales (nombre, longitude, latitude, id_negocio) VALUES (?, ?, ?, ?)",
+      [nombre, longitude, latitude, id_negocio],
+    );
+
+    ctx.response.status = 201;
+    ctx.response.body = { message: "Sucursal registrada correctamente." };
+  } catch (error) {
+    console.error("Error al registrar la sucursal:", error);
+    ctx.response.status = 500;
+    ctx.response.body = { message: "Error interno al registrar la sucursal." };
+  }
+  /* ------------------------- PETICIÓN DE PRUEBA
       {
         "nombre": "Sucursal Tortilleria Raúl",
         "longitude": -99.1332,
@@ -331,20 +339,31 @@ Register.post("/register/sucursal", async (ctx) => {
         "id_negocio": 1
       }
     ----------------------------*/
-  });
-
+});
 
 //Endpoint para agregar usuarios a la sucursal(username@dominio-negocio.com)
 // Endpoint para registrar un nuevo usuario y asociarlo a una sucursal y un negocio
 Register.post("/register/adduser/sucursal/negocio", async (ctx) => {
   try {
-    const { email, password, id_role, id_sucursal, id_negocio, nombre, id_admin } = await ctx.request.body().value; // Extraer los datos del cuerpo de la solicitud
+    const {
+      email,
+      password,
+      id_role,
+      id_sucursal,
+      id_negocio,
+      nombre,
+      id_admin,
+    } = await ctx.request.body().value; // Extraer los datos del cuerpo de la solicitud
 
     // Validar que todos los campos sean proporcionados
-    if (!email || !password || !id_role || !id_sucursal || !id_negocio || !nombre || !id_admin) {
+    if (
+      !email || !password || !id_role || !id_sucursal || !id_negocio ||
+      !nombre || !id_admin
+    ) {
       ctx.response.status = 400;
       ctx.response.body = {
-        message: "Todos los campos son requeridos: email, password, id_role, id_sucursal, id_negocio, nombre.",
+        message:
+          "Todos los campos son requeridos: email, password, id_role, id_sucursal, id_negocio, nombre.",
       };
       return;
     }
@@ -353,7 +372,7 @@ Register.post("/register/adduser/sucursal/negocio", async (ctx) => {
     const dbClient = getDBClient();
     const existingUser = await dbClient.query(
       "SELECT * FROM cuenta WHERE correo = ?",
-      [email]
+      [email],
     );
 
     if (existingUser.length > 0) {
@@ -365,7 +384,7 @@ Register.post("/register/adduser/sucursal/negocio", async (ctx) => {
     // Verificar si la sucursal existe
     const existingSucursal = await dbClient.query(
       "SELECT * FROM sucursales WHERE id = ?",
-      [id_sucursal]
+      [id_sucursal],
     );
 
     if (existingSucursal.length === 0) {
@@ -377,7 +396,7 @@ Register.post("/register/adduser/sucursal/negocio", async (ctx) => {
     // Verificar si el negocio existe
     const existingNegocio = await dbClient.query(
       "SELECT * FROM negocio WHERE id = ?",
-      [id_negocio]
+      [id_negocio],
     );
 
     if (existingNegocio.length === 0) {
@@ -392,7 +411,7 @@ Register.post("/register/adduser/sucursal/negocio", async (ctx) => {
     // Insertar el nuevo usuario en la base de datos
     const result = await dbClient.execute(
       "INSERT INTO cuenta (correo, contraseña, id_rol, nombre, activated) VALUES (?, ?, ?, ?, ?)",
-      [email, hashedPassword, id_role, nombre, true] // Usamos el correo como nombre por ahora y 'false' para 'activated'
+      [email, hashedPassword, id_role, nombre, true], // Usamos el correo como nombre por ahora y 'false' para 'activated'
     );
 
     const userId = result.lastInsertId; // Obtener el ID del usuario recién insertado
@@ -400,7 +419,7 @@ Register.post("/register/adduser/sucursal/negocio", async (ctx) => {
     // Insertar la relación entre el usuario, la sucursal y el negocio
     await dbClient.execute(
       "INSERT INTO cuenta_sucursal (id_cuenta, id_sucursal, id_negocio, id_admin) VALUES (?, ?, ?, ?)",
-      [userId, id_sucursal, id_negocio, id_admin]
+      [userId, id_sucursal, id_negocio, id_admin],
     );
 
     // No es necesario almacenar el código de validación ni enviar el correo
@@ -425,10 +444,6 @@ Register.post("/register/adduser/sucursal/negocio", async (ctx) => {
   ----------------------------*/
 });
 
-
-
-  
-  
 export default Register;
 
 //Pendientes:
