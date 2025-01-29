@@ -52,6 +52,7 @@ CREATE TABLE cuentas_suscripciones (
 CREATE TABLE negocio (
   id INTEGER AUTO_INCREMENT PRIMARY KEY,
   nombre VARCHAR(255) NOT NULL,
+  dominio VARCHAR(255) NOT NULL,
   id_cuenta INTEGER NOT NULL,
   FOREIGN KEY (id_cuenta) REFERENCES cuenta(id) ON DELETE CASCADE
 );

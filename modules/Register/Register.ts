@@ -235,13 +235,13 @@ Register.post("/register/subscription/add", async (ctx) => {
 Register.post("/register/business", async (ctx) => {
     try {
       // Extraer los datos del cuerpo de la solicitud
-      const { nombre, id_cuenta } = await ctx.request.body().value;
+      const { nombre, dominio, id_cuenta } = await ctx.request.body().value;
   
-      // Validar que ambos campos sean proporcionados
-      if (!nombre || !id_cuenta) {
+      // Validar que todos los campos sean proporcionados
+      if (!nombre || !dominio || !id_cuenta) {
         ctx.response.status = 400;
         ctx.response.body = {
-          message: "Ambos campos son requeridos: nombre, id_cuenta.",
+          message: "Todos los campos son requeridos: nombre, dominio, id_cuenta.",
         };
         return;
       }
@@ -261,8 +261,8 @@ Register.post("/register/business", async (ctx) => {
   
       // Insertar el negocio en la tabla negocio
       await dbClient.execute(
-        "INSERT INTO negocio (nombre, id_cuenta) VALUES (?, ?)",
-        [nombre, id_cuenta]
+        "INSERT INTO negocio (nombre, dominio, id_cuenta) VALUES (?, ?, ?)",
+        [nombre, dominio, id_cuenta]
       );
   
       ctx.response.status = 201;
@@ -275,10 +275,12 @@ Register.post("/register/business", async (ctx) => {
     /* ------------------------- PETICIÓN DE PRUEBA
     {
         "nombre": "Mi Negocio",
+        "dominio": "mi-negocio.com",
         "id_cuenta": 1
     }
     ----------------------------*/
-});
+  });
+  
 
 //Endpoint para agregar sucursales al negocio
 Register.post("/register/sucursal", async (ctx) => {
@@ -332,8 +334,8 @@ Register.post("/register/sucursal", async (ctx) => {
   });
 
 
-  //Endpoint para agregar usuarios a la sucursal
-  
+//Endpoint para agregar usuarios a la sucursal(username@dominio-negocio.com)
+
   
   
 export default Register;
