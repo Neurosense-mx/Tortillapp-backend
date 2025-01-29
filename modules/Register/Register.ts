@@ -231,7 +231,6 @@ Register.post("/register/subscription/add", async (ctx) => {
     ----------------------------*/
 });
 
-
 //Endpoint para registrar el nombre del negocio
 Register.post("/register/business", async (ctx) => {
     try {
@@ -279,7 +278,63 @@ Register.post("/register/business", async (ctx) => {
         "id_cuenta": 1
     }
     ----------------------------*/
+});
+
+//Endpoint para agregar sucursales al negocio
+Register.post("/register/sucursal", async (ctx) => {
+    try {
+      // Extraer los datos del cuerpo de la solicitud
+      const { nombre, longitude, latitude, id_negocio } = await ctx.request.body().value;
+  
+      // Validar que todos los campos sean proporcionados
+      if (!nombre || !longitude || !latitude || !id_negocio) {
+        ctx.response.status = 400;
+        ctx.response.body = {
+          message: "Todos los campos son requeridos: nombre, longitude, latitude, id_negocio.",
+        };
+        return;
+      }
+  
+      // Verificar si el negocio (id_negocio) existe
+      const dbClient = getDBClient();
+      const businessExists = await dbClient.query(
+        "SELECT 1 FROM negocio WHERE id = ?",
+        [id_negocio]
+      );
+  
+      if (businessExists.length === 0) {
+        ctx.response.status = 400;
+        ctx.response.body = { message: "El negocio no existe." };
+        return;
+      }
+  
+      // Insertar la nueva sucursal en la tabla sucursales
+      await dbClient.execute(
+        "INSERT INTO sucursales (nombre, longitude, latitude, id_negocio) VALUES (?, ?, ?, ?)",
+        [nombre, longitude, latitude, id_negocio]
+      );
+  
+      ctx.response.status = 201;
+      ctx.response.body = { message: "Sucursal registrada correctamente." };
+    } catch (error) {
+      console.error("Error al registrar la sucursal:", error);
+      ctx.response.status = 500;
+      ctx.response.body = { message: "Error interno al registrar la sucursal." };
+    }
+    /* ------------------------- PETICIÓN DE PRUEBA
+      {
+        "nombre": "Sucursal Tortilleria Raúl",
+        "longitude": -99.1332,
+        "latitude": 19.4326,
+        "id_negocio": 1
+      }
+    ----------------------------*/
   });
+
+
+  //Endpoint para agregar usuarios a la sucursal
+  
+  
   
 export default Register;
 

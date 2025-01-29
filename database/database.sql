@@ -60,10 +60,10 @@ CREATE TABLE negocio (
 CREATE TABLE sucursales (
   id INTEGER AUTO_INCREMENT PRIMARY KEY,
   nombre VARCHAR(255) NOT NULL,
-  longitude VARCHAR(255) NOT NULL,
+  longitude DOUBLE NOT NULL,
   latitude DOUBLE NOT NULL,
-  id_cliente INTEGER NOT NULL,
-  FOREIGN KEY (id_cliente) REFERENCES negocio(id) ON DELETE CASCADE
+  id_negocio INTEGER NOT NULL,
+  FOREIGN KEY (id_negocio) REFERENCES negocio(id) ON DELETE CASCADE
 );
 
 
