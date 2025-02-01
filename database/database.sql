@@ -39,6 +39,11 @@ CREATE TABLE suscripciones (
     descuento DOUBLE DEFAULT 0,
     estado BOOLEAN DEFAULT TRUE
 );
+CREATE TABLE suscripciones_detalles (
+    id INTEGER PRIMARY KEY AUTO_INCREMENT,
+    id_suscripcion INTEGER NOT NULL,
+    descripcion VARCHAR(255) NOT NULL
+);
 -- Tabla para las relaciones entre cuentas y suscripciones
 CREATE TABLE cuentas_suscripciones (
     id_cuenta INTEGER NOT NULL,

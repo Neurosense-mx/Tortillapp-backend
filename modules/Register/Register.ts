@@ -38,10 +38,10 @@ Register.post("/register/validateEmail", async (ctx) => {
 // Endpoint para registrar un nuevo usuario
 Register.post("/register/adduser", async (ctx) => {
   try {
-    const { email, password, id_role, nombre } = await ctx.request.body().value; // Extraer también el nombre
+    const { email, password, id_suscripcion } = await ctx.request.body().value; // Extraer también el nombre
 
     // Validar que todos los campos sean proporcionados
-    if (!email || !password || !id_role || !nombre) {
+    if (!email || !password || !id_suscripcion) {
       ctx.response.status = 400;
       ctx.response.body = {
         message:
@@ -69,31 +69,45 @@ Register.post("/register/adduser", async (ctx) => {
     // Insertar el nuevo usuario en la base de datos con el nombre correcto
     const result = await dbClient.execute(
       "INSERT INTO cuenta (correo, contraseña, id_rol, nombre, activated) VALUES (?, ?, ?, ?, ?)",
-      [email, hashedPassword, id_role, nombre, false], // Aquí se usa 'nombre' en lugar de 'email'
+      [email, hashedPassword, 1, "", true], // Aquí se usa 'nombre' en lugar de 'email'
     );
 
-    const userId = result.lastInsertId; // Obtener el ID del usuario recién insertado
+    const id_cuenta = result.lastInsertId; // Obtener el ID del usuario recién insertado
+    //crear la relacion del usuario con la suscripcion
+    // Verificar si la cuenta existe
+    const accountExists = await dbClient.query(
+      "SELECT 1 FROM cuenta WHERE id = ?",
+      [id_cuenta],
+    );
 
-    // Generar un código de validación
-    const validationCode = Math.floor(100000 + Math.random() * 900000)
-      .toString(); // Código de 6 dígitos
+    if (accountExists.length === 0) {
+      ctx.response.status = 400;
+      ctx.response.body = { message: "La cuenta no existe." };
+      return;
+    }
 
-    // Almacenar el código en la base de datos
+    // Verificar si la suscripción existe
+    const subscriptionExists = await dbClient.query(
+      "SELECT 1 FROM suscripciones WHERE id = ?",
+      [id_suscripcion],
+    );
+
+    if (subscriptionExists.length === 0) {
+      ctx.response.status = 400;
+      ctx.response.body = { message: "La suscripción no existe." };
+      return;
+    }
+
+    // Insertar la suscripción en la tabla cuentas_suscripciones
     await dbClient.execute(
-      "INSERT INTO codigos_validacion (id_usuario, codigo) VALUES (?, ?)",
-      [userId, validationCode],
+      "INSERT INTO cuentas_suscripciones (id_cuenta, id_suscripcion) VALUES (?, ?)",
+      [id_cuenta, id_suscripcion],
     );
 
-    // Crear una instancia del servicio de correo
-    const emailService = new EmailService();
-
-    // Enviar el correo de validación
-    await emailService.sendValidationEmail(email, validationCode);
-
-    ctx.response.status = 201;
+    ctx.response.status = 200;
     ctx.response.body = {
       message:
-        "Usuario registrado correctamente. Se ha enviado un correo de validación.",
+        "Usuario registrado correctamente. Bienvenido a Tortillapp.",
     };
   } catch (error) {
     console.error("Error en el registro de usuario:", error);
@@ -104,58 +118,30 @@ Register.post("/register/adduser", async (ctx) => {
 {
     "email": "replacedspace17@gmail.com",
     "password": "Javier117",
-    "id_role": 1,
-    "nombre": "Javier Gutierrez"
-}
+    "id_suscripcion": 1,
+}----------------------------*/
 });
 
-// Endpoint para activar un usuario
-Register.post("/register/verify", async (ctx) => {
-    try {
-      const { userId, code } = await ctx.request.body().value; // Extraer los datos del cuerpo de la solicitud
 
-      // Validar que se haya proporcionado el id_usuario y el código
-      if (!userId || !code) {
-        ctx.response.status = 400;
-        ctx.response.body = {
-          message: "Se requiere el id_usuario y el código.",
-        };
-        return;
-      }
 
-      // Verificar si el código de validación es correcto
-      const dbClient = getDBClient();
-      const validationRecord = await dbClient.query(
-        "SELECT * FROM codigos_validacion WHERE id_usuario = ? AND codigo = ?",
-        [userId, code],
-      );
+Register.post("/register/sendCode/:email", async (ctx) => {
+  // obtener el email del usuario
+  const { email } = ctx.params;
+  const validationCode = Math.floor(1000 + Math.random() * 9000)
+    .toString(); // Código de 4 dígitos
 
-      if (validationRecord.length === 0) {
-        ctx.response.status = 400;
-        ctx.response.body = { message: "Código de validación inválido." };
-        return;
-      }
+  // Crear una instancia del servicio de correo
+  const emailService = new EmailService();
 
-      // Actualizar el estado del usuario a 'activated' = true
-      await dbClient.execute(
-        "UPDATE cuenta SET activated = ? WHERE id = ?",
-        [true, userId]
-      );
+  // Enviar el correo de validación
+  await emailService.sendValidationEmail(email, validationCode);
+  console.log("Código de validación:", validationCode); 
+  //contestar al cliente con el código de validación y un 200
+  ctx.response.status = 200;
+  ctx.response.body = { code: validationCode };
 
-      ctx.response.status = 200;
-      ctx.response.body = { message: "Cuenta activada correctamente." };
-    } catch (error) {
-      console.error("Error en la verificación del código:", error);
-      ctx.response.status = 500;
-      ctx.response.body = { message: "Error interno al verificar el código." };
-    }
-    /* ------------------------- PETICIÓN DE PRUEBA
-        {
-            "userId": 1,
-            "code": "123456"
-        }
-        ----------------------------*/
 });
+
 
 //Endpoint para obtener las suscripciones de un usuario
 Register.get("/register/getSubscriptions", async (ctx) => {
@@ -238,6 +224,7 @@ Register.post("/register/subscription/add", async (ctx) => {
     ----------------------------*/
 });
 
+///////////////////////////// mover a Admin
 //Endpoint para registrar el nombre del negocio
 Register.post("/register/business", async (ctx) => {
   try {
