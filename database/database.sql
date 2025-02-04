@@ -92,3 +92,16 @@ INSERT INTO roles (nombre, descripcion) VALUES
 --- tabla de insertar suscripciones
 INSERT INTO suscripciones (nombre, precio, descuento, estado) VALUES
 ('Básica', 0, 0, TRUE)
+
+-- Tabla para la configuración de los administradores
+CREATE TABLE adminConfig (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_admin INT NOT NULL,
+    negocio BOOLEAN NOT NULL DEFAULT FALSE,
+    sucursal BOOLEAN NOT NULL DEFAULT FALSE,
+    precio BOOLEAN NOT NULL DEFAULT FALSE,
+    productos BOOLEAN NOT NULL DEFAULT FALSE,
+    gastos BOOLEAN NOT NULL DEFAULT FALSE,
+    empleados BOOLEAN NOT NULL DEFAULT FALSE,
+    CONSTRAINT fk_admin FOREIGN KEY (id_admin) REFERENCES cuenta(id) ON DELETE CASCADE
+);

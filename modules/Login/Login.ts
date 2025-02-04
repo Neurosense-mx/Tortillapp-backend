@@ -18,65 +18,79 @@ const JWT_SECRET_ENCODE = await crypto.subtle.importKey(
   
 //Enpoint para loguear un usuario
 Login.post("/login", async (ctx) => {
-    try {
+  try {
       const { email, password } = await ctx.request.body().value;
-  
+
       if (!email || !password) {
-        ctx.response.status = 400;
-        ctx.response.body = { error: "Faltan campos obligatorios." };
-        return;
+          ctx.response.status = 400;
+          ctx.response.body = { error: "Faltan campos obligatorios." };
+          return;
       }
-  
+
       const db = getDBClient();
       const user = await db.query(
-        "SELECT id, correo, contraseña, nombre, id_rol, activated FROM cuenta WHERE correo = ?",
-        [email]
+          "SELECT id, correo, contraseña, nombre, id_rol, activated FROM cuenta WHERE correo = ?",
+          [email]
       );
-  
+
       if (user.length === 0) {
-        ctx.response.status = 404;
-        ctx.response.body = { error: "Correo no registrado." };
-        return;
+          ctx.response.status = 404;
+          ctx.response.body = { error: "Correo no registrado." };
+          return;
       }
-  
+
       const { id, contraseña: passwordHashed, nombre, id_rol, activated } = user[0];
-  
-      if (!activated) {
-        ctx.response.status = 403;
-        ctx.response.body = { error: "Cuenta no activada." };
-        return;
+
+      if (activated !== 1) {  // Validación estricta para estado activado
+          ctx.response.status = 403;
+          ctx.response.body = { error: "Cuenta desactivada." };
+          return;
       }
-  
+
       const isValidPassword = await comparePassword(password, passwordHashed);
       if (!isValidPassword) {
-        ctx.response.status = 401;
-        ctx.response.body = { error: "Credenciales incorrectas." };
-        return;
+          ctx.response.status = 401;
+          ctx.response.body = { error: "Credenciales incorrectas." };
+          return;
       }
-  
+
+      // 🔹 Obtener configuración si el usuario tiene rol de administrador (id_rol === 1)
+      let config = null;
+      if (id_rol === 1) {
+          const configData = await db.query(
+              "SELECT negocio, sucursal, precio, productos, gastos, empleados FROM adminConfig WHERE id_admin = ?",
+              [id]
+          );
+          config = configData.length > 0 ? configData[0] : {};
+      }
+
       // 🔹 Generar token JWT
       const payload = {
-        id,
-        email,
-        nombre,
-        id_rol,
-        exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // Expira en 1 día
+          id,
+          email,
+          nombre,
+          id_rol,
+          exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24, // Expira en 1 día
       };
-  
+
       const token = await create({ alg: "HS256", typ: "JWT" }, payload, JWT_SECRET_ENCODE);
-  
+
+      //Imprimir nuevo ususaio logueado
+      console.log("Usuario logueado:", { id, email, nombre, id_rol, config });
       ctx.response.status = 200;
       ctx.response.body = {
-        token,
-        user: { id, email, nombre, id_rol },
+          token,
+          user: { id, email, nombre, id_rol, config },
       };
-    } catch (error) {
+  } catch (error) {
       console.error("Error en login:", error);
       ctx.response.status = 500;
       ctx.response.body = { error: "Error en el servidor." };
-    }
-    /**
-     {
+  }
+});
+
+/*
+    {
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTIsImVtYWlsIjoidGVzdEBuZXVyb3NlbnNlLm14Iiwibm9tYnJlIjoiIiwiaWRfcm9sIjoxLCJleHAiOjE3Mzg2MTkzMTR9.BhrKBGKgIJ9g8W_BDW-IKEQyzsUgnGoOaXyCMzXIHFU",
   "user": {
     "id": 12,
@@ -89,8 +103,7 @@ Login.post("/login", async (ctx) => {
 {
   "error": "Credenciales incorrectas."
 }
-     */
-  });
+*/
 
 //Endpoint para obtener info de un usuario empleado(id_account, id_role, id_negocio, id_sucursal, id_user_Admin)
 Login.get("/login/empleado/:id_account", async (ctx) => {

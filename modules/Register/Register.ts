@@ -104,6 +104,12 @@ Register.post("/register/adduser", async (ctx) => {
       [id_cuenta, id_suscripcion],
     );
 
+    //Insertar en la tabla de config admin
+    await dbClient.execute(
+      "INSERT INTO adminConfig (id_admin, negocio, sucursal, precio, productos, gastos, empleados) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [id_cuenta, 0, 0, 0, 0, 0, 0],
+    );
+
     ctx.response.status = 200;
     ctx.response.body = {
       message:
