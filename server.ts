@@ -9,6 +9,7 @@ import { dbConnectionMiddleware } from "./utils/Middleware.ts"; // Middleware de
 //-----------------------------------------------------------------------------------IMPORTS DE LOS MÓDULOS A USAR
 import Register from "./modules/Register/Register.ts";
 import Login from "./modules/Login/Login.ts";
+import Admin from "./modules/Admin/Admin.ts";
 
 // Crear la aplicación
 const app = new Application();
@@ -39,6 +40,9 @@ app.use(Register.allowedMethods());
 //login
 app.use(Login.routes());
 app.use(Login.allowedMethods());
+//admin
+app.use(Admin.routes());
+app.use(Admin.allowedMethods());
 
 
 

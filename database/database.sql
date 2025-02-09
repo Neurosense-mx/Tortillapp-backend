@@ -81,6 +81,44 @@ CREATE TABLE cuenta_sucursal (
   UNIQUE (id_cuenta, id_sucursal)  -- Asegura que no haya duplicados en la relación
 );
 
+CREATE TABLE adminConfig (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_admin INT NOT NULL,
+    negocio BOOLEAN NOT NULL DEFAULT FALSE,
+    sucursal BOOLEAN NOT NULL DEFAULT FALSE,
+    precio BOOLEAN NOT NULL DEFAULT FALSE,
+    productos BOOLEAN NOT NULL DEFAULT FALSE,
+    gastos BOOLEAN NOT NULL DEFAULT FALSE,
+    empleados BOOLEAN NOT NULL DEFAULT FALSE,
+    CONSTRAINT fk_admin FOREIGN KEY (id_admin) REFERENCES cuenta(id) ON DELETE CASCADE
+);
+
+-- Crear tabla 'precio_kilo_tortilla'
+CREATE TABLE precio_kilo_tortilla (
+  id INT PRIMARY KEY AUTO_INCREMENT,          -- ID de la tabla (auto incremental)
+  id_sucursal INT NOT NULL,                   -- ID de la sucursal
+  precio_publico DOUBLE NOT NULL,             -- Precio público
+  precio_cliente DOUBLE NOT NULL              -- Precio para las tiendas
+);
+
+-- Crear tabla 'productos'
+CREATE TABLE productos (
+  id INT PRIMARY KEY AUTO_INCREMENT,          -- ID autoincremental
+  id_sucursal INT NOT NULL,                   -- ID de la sucursal
+  nombre VARCHAR(255) NOT NULL,                -- Nombre del producto
+  precio DECIMAL(10, 2) NOT NULL,             -- Precio del producto (hasta 10 dígitos, 2 decimales)
+  fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP   -- Fecha y hora de inserción (por defecto la fecha actual)
+);
+
+-- Crear tabla 'gastos_personalizados'
+CREATE TABLE gastos_personalizados (
+  id INT PRIMARY KEY AUTO_INCREMENT,          -- ID autoincremental
+  id_cuenta INT NOT NULL,                     -- ID de cuenta
+  id_negocio INT NOT NULL,                    -- ID del negocio
+  tipo_gasto INT CHECK (tipo_gasto IN (1, 2)), -- Tipo de gasto (1: fijo, 2: variable)
+  nombre VARCHAR(255) NOT NULL,                -- Nombre del gasto
+  descripcion VARCHAR(255)                    -- Descripción del gasto
+);
 
 --- Tabla de insertar roles
 INSERT INTO roles (nombre, descripcion) VALUES
@@ -94,14 +132,3 @@ INSERT INTO suscripciones (nombre, precio, descuento, estado) VALUES
 ('Básica', 0, 0, TRUE)
 
 -- Tabla para la configuración de los administradores
-CREATE TABLE adminConfig (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    id_admin INT NOT NULL,
-    negocio BOOLEAN NOT NULL DEFAULT FALSE,
-    sucursal BOOLEAN NOT NULL DEFAULT FALSE,
-    precio BOOLEAN NOT NULL DEFAULT FALSE,
-    productos BOOLEAN NOT NULL DEFAULT FALSE,
-    gastos BOOLEAN NOT NULL DEFAULT FALSE,
-    empleados BOOLEAN NOT NULL DEFAULT FALSE,
-    CONSTRAINT fk_admin FOREIGN KEY (id_admin) REFERENCES cuenta(id) ON DELETE CASCADE
-);

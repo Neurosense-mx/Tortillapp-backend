@@ -55,14 +55,19 @@ Login.post("/login", async (ctx) => {
       }
 
       // 🔹 Obtener configuración si el usuario tiene rol de administrador (id_rol === 1)
-      let config = null;
+      let config = [];
       if (id_rol === 1) {
           const configData = await db.query(
               "SELECT negocio, sucursal, precio, productos, gastos, empleados FROM adminConfig WHERE id_admin = ?",
               [id]
           );
+
+         
           config = configData.length > 0 ? configData[0] : {};
+
       }
+
+      
 
       // 🔹 Generar token JWT
       const payload = {
